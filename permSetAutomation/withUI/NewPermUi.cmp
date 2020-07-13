@@ -1,0 +1,86 @@
+<aura:component controller="FCPermsWithUI" implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes" access="global" >
+    <!--Create attributes needed. Booleans are the checkboxes to indicate which options to be included in the perm sets--> 
+    <aura:attribute name="BaseLineBool" type="Boolean" default="false"/>
+    <aura:attribute name="AmendmentBool" type="Boolean" default="false"/>
+    <aura:attribute name="BenchmarksBool" type="Boolean" default="false"/>
+    <aura:attribute name="ReportsBoolean" type="Boolean" default="false"/>
+    <aura:attribute name="ReviewerBaseLineBoolean" type="Boolean" default="false"/>
+    
+    
+    
+    
+    
+    
+    <!-- PAGE HEADER -->
+    <lightning:layout class="slds-page-header slds-page-header--object-home">
+        <lightning:layoutItem>
+            <lightning:icon iconName="standard:scan_card" alternativeText="Perm Set"/>
+        </lightning:layoutItem>
+        <lightning:layoutItem padding="horizontal-small">
+            <div class="page-section page-header">
+                <h1 class="slds-text-heading--label">FoundationConnect - Permission Set Creator</h1>
+            </div>
+        </lightning:layoutItem>
+    </lightning:layout>
+    
+    <!--Community User Permissions on the Grantee Portal-->
+    <lightning:layout>
+        <lightning:layoutItem padding="around-small" size="6">
+            <div>Instructions:</div>
+            <ol class="slds-list--ordered">
+                <li>In the input boxes enter the name of the associated permission set</li>
+                <li>Click the checkbox to confirm you want to create the related permission set with the name you have provided</li>
+                <li>If you do not check off the box then the permission set will not be created.</li>
+                <li>Once you have supplied the names and clicked the boxes for the permission sets you do want to create, select the "Click To Create!" box. Please wait 5-10 seconds for the permission set(s) to create</li>
+                <li>After the permission set is created navigate to "Setup" -> "Permission Sets". From here you can assign the permission set to the appropriate users</li>
+
+            </ol>
+            <hr></hr>
+            <div class="slds-text-heading_medium">Grantee User Base - Permission Set Name:</div>
+            <lightning:input  aura:id="granteeBasePermNameVal" name="myname" placeholder="Name of your Permissions set for Community User Permissions on the Grantee Portal Goes Here"/>
+            <lightning:input type="checkbox" label="Yes I want to create a Community User Permissions set for users using the Grantee Portal. Permissions included are the permissions
+                                                    documented below:" checked="{!v.BaseLineBool}"/> 
+            <lightning:formattedUrl value="https://powerofus.force.com/s/article/fC-Security-GP-Community-User-Permissions" tooltip="Grantee Portal Base" target="_blank" />
+            <hr> </hr>
+            
+            <div class="slds-text-heading_medium">Amendments - Permission Set Name:</div>
+            <lightning:input  aura:id="AmendmentPermNameVal" name="myname" placeholder="Name of your Permissions set for Community User Permissions When Using Amendments Goes Here"/>
+            <lightning:input type="checkbox" label="Yes I want to create a Community User Permissions set for users using Amendments. Permissions included are the permissions
+                                                    documented below:" checked="{!v.AmendmentBool}"/> 
+            <lightning:formattedUrl value="https://powerofus.force.com/s/article/fC-Community-User-Permissions-Amendments" tooltip="Amendments" target="_blank" />
+ 
+            <hr> </hr>
+            
+            
+            
+            <div class="slds-text-heading_medium">Benchmarks - Permission Set Name:</div>
+            <lightning:input  aura:id="BenchmarksBoolPermNameVal" name="myname" placeholder="Name of your Permissions set for Community User Permissions When Using Benchmarks Goes Here"/>
+            <lightning:input type="checkbox" label="Yes I want to create a Community User Permissions set for users using Benchmarks. Permissions included are the permissions
+                                                    documented below:" checked="{!v.BenchmarksBool}"/> 
+            <lightning:formattedUrl value="https://powerofus.force.com/s/article/fC-Security-GP-Community-User-Permissions-Benchmarks" tooltip="Benchmarks" target="_blank" />
+            <hr></hr>
+            
+            <div class="slds-text-heading_medium">Grantee Reports - Permission Set Name:</div>
+            <lightning:input  aura:id="GranteeReportsBoolPermNameVal" name="myname" placeholder="Name of your Permissions set for Community User Permissions When Using Grantee Reports Goes Here"/>
+            <lightning:input type="checkbox" label="Yes I want to create a Community User Permissions set for users using Grantee Reports. Permissions included are the permissions
+                                                    documented below:" checked="{!v.ReportsBoolean}"/> 
+            <lightning:formattedUrl value="https://powerofus.force.com/s/article/fC-Security-GP-Community-User-Permissions-Grantee-Report" tooltip="Benchmarks" target="_blank" />
+            <hr></hr>
+            
+            <div class="slds-text-heading_medium">Reviewer Portal - Permission Set Name:</div>
+            <lightning:input  aura:id="ReviewerPortalBoolPermNameVal" name="myname" placeholder="Name of your Permissions set for Community User Permissions When Using the Reviewer Portal Goes Here"/>
+            <lightning:input type="checkbox" label="Yes I want to create a Community User Permissions set for users using the Reviewer Portal. Permissions included are the permissions
+                                                    documented below:" checked="{!v.ReviewerBaseLineBoolean}"/> 
+            <lightning:formattedUrl value="https://powerofus.force.com/s/article/fC-Security-RP-Community-User-Permissions" tooltip="Benchmarks" target="_blank" />
+            <hr></hr>
+            
+            <hr> </hr>
+
+            
+            <lightning:button label="Click To Create!"
+                              onclick="{!c.doGranteePerms}"/>
+        </lightning:layoutItem>
+    </lightning:layout>
+    
+    
+</aura:component>

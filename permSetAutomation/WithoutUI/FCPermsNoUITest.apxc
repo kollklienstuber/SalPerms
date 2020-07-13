@@ -1,0 +1,40 @@
+@isTest
+public class FCPermsNoUITest {
+
+
+    @isTest static void AllPerms() {
+      /*
+        cleanerFCPerms cp = new cleanerFCPerms();
+        cp.FCGranteeBasePerms();
+        cp.FCReviewerPerms();
+        cp.FCGranteeReportPerms();     
+        cp.FCBenchMarkPerms();
+        cp.FCAmendmentsPerms();
+       * 
+       */
+       
+        FCPermsNoUI cp = new FCPermsNoUI();
+        cp.FCGranteeBasePerms();
+        cp.FCReviewerPerms();
+        cp.FCGranteeReportPerms();     
+        cp.FCBenchMarkPerms();
+        cp.FCAmendmentsPerms();
+        
+   		PermissionSet permSet1 = [SELECT Id, Name FROM PermissionSet WHERE Name = 'FC_Grantee_Base_Permissions007'];
+       	PermissionSet permSet2 = [SELECT Id, Name FROM PermissionSet WHERE Name = 'FC_Amendments_Permissions007'];
+        PermissionSet permSet3 = [SELECT Id, Name FROM PermissionSet WHERE Name = 'FC_Benchmark_Base_Permissions007'];
+       	PermissionSet permSet4 = [SELECT Id, Name FROM PermissionSet WHERE Name = 'FC_Grantee_Report_Base_Permissions007'];   		
+        PermissionSet permSet5 = [SELECT Id, Name FROM PermissionSet WHERE Name = 'FC_Reviewer_Perms_Base_Permissions007'];
+
+        
+        
+        
+        System.assertEquals(permSet1.Name,'FC_Grantee_Base_Permissions007');
+        System.assertEquals(permSet2.Name,'FC_Amendments_Permissions007');
+        System.assertEquals(permSet3.Name,'FC_Benchmark_Base_Permissions007');
+        System.assertEquals(permSet4.Name,'FC_Grantee_Report_Base_Permissions007');
+        System.assertEquals(permSet5.Name,'FC_Reviewer_Perms_Base_Permissions007');
+
+        }
+    
+}

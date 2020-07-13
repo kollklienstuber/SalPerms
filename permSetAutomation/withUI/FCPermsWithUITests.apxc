@@ -1,0 +1,35 @@
+@isTest
+public class FCPermsWithUITests {
+
+    
+       @isTest static void AllPerms() {
+      
+       
+        FCPermsWithUI.FCGranteeBasePerms('granteePermsbaseLine');
+        FCPermsWithUI.FCReviewerPerms('ReviwerPermsbaseLine');
+        FCPermsWithUI.FCGranteeReportPerms('granteeReportsPermsbaseLine');
+        FCPermsWithUI.FCBenchMarkPerms('granteeBenchmarksPermsbaseLine');
+        FCPermsWithUI.FCAmendmentsPerms('granteeAmendmentsPermsbaseLine');
+          
+        
+   		PermissionSet permSet1 = [SELECT Id, Name FROM PermissionSet WHERE Name = 'granteePermsbaseLine'];
+       	PermissionSet permSet2 = [SELECT Id, Name FROM PermissionSet WHERE Name = 'ReviwerPermsbaseLine'];
+        PermissionSet permSet3 = [SELECT Id, Name FROM PermissionSet WHERE Name = 'granteeReportsPermsbaseLine'];
+       	PermissionSet permSet4 = [SELECT Id, Name FROM PermissionSet WHERE Name = 'granteeBenchmarksPermsbaseLine'];   		
+        PermissionSet permSet5 = [SELECT Id, Name FROM PermissionSet WHERE Name = 'granteeAmendmentsPermsbaseLine'];
+
+        
+        
+        
+        System.assertEquals(permSet1.Name,'granteePermsbaseLine');
+        System.assertEquals(permSet2.Name,'ReviwerPermsbaseLine');
+        System.assertEquals(permSet3.Name,'granteeReportsPermsbaseLine');
+        System.assertEquals(permSet4.Name,'granteeBenchmarksPermsbaseLine');
+        System.assertEquals(permSet5.Name,'granteeAmendmentsPermsbaseLine');
+
+        }
+
+    
+    
+    
+}

@@ -1,0 +1,889 @@
+public with sharing class FCPermsNoUI {
+  
+  /**
+* @author Salesforce.org
+* @date 2020
+*
+* @group ???
+*
+* @description Creates permissions automatically for FC users
+* 
+*/
+    
+/*
+    Anonymous block to kick off all methods creating 5 different permission sets:
+        cleanerFCPerms cp = new cleanerFCPerms();
+        cp.FCGranteeBasePerms();
+        cp.FCReviewerPerms();
+        cp.FCGranteeReportPerms();     
+        cp.FCBenchMarkPerms();
+        cp.FCAmendmentsPerms();
+*/
+    
+    
+    /*******************************************************************************************************
+    * @description Method that is used to do the logic of assigning the correct permissions on the permission
+    * set. This method is used by every other method in this class.
+    *  
+    * @param objectsAndCRUD Used to hold the objects that we will be assigning permissions to
+    * @param PermissionSet The permission set that we are altering
+    * @param existOP Used for future use cases. This is needed in case we are not inserting, but instead updating. However we will always be inserting with this class
+    * @param objPerms List used to hold all of the correct object CRUD permissions that we upsert 
+    * @param existFP Used for future use cases. This is needed in case we are not inserting, but instead updating. However we will always be inserting with this class
+    * @param fieldsAndCRUD Used to hold the Fields that we will be assigning permissions to
+    * @param fieldPerms List used to hold all of the correct field Read Edit permissions that we upsert 
+    * @return dmlWrapper.  always null.
+    ********************************************************************************************************/
+    public void logicPerms(Map<String, List<Boolean>> objectsAndCRUD, PermissionSet pr, 
+                           Map<String, String> existOP, List<ObjectPermissions> objPerms,  
+                           Map<String, String> existFP, Map<String, List<Boolean>> fieldsAndCRUD, 
+                           List<FieldPermissions> fieldPerms)
+    {       
+        for(String objectName :objectsAndCRUD.keySet()) {
+            ObjectPermissions objPermission = new ObjectPermissions();
+            objPermission.ParentId = pr.Id;
+            objPermission.SobjectType = objectName;
+            objPermission.PermissionsRead = False;
+            objPermission.PermissionsCreate = False;
+            objPermission.PermissionsEdit = False;
+            objPermission.PermissionsDelete = False;
+            if (existOP.get(objectName) != null){
+                objPermission.Id = existOP.get(objectName);
+                system.debug('existOP:' + objPermission.Id); 
+            }
+          
+            if (objectsAndCRUD.get(objectName)[0] == True)  
+            {objPermission.PermissionsRead = true;}
+            if (objectsAndCRUD.get(objectName)[1] == True)  
+            {objPermission.PermissionsCreate = true;}
+            if (objectsAndCRUD.get(objectName)[2] == True)  
+            {objPermission.PermissionsEdit = true;}
+            if (objectsAndCRUD.get(objectName)[3] == True)
+            {objPermission.PermissionsDelete = true;}
+            objPerms.add(objPermission);	
+        }
+        
+        for(String fieldName :fieldsAndCRUD.keySet()) {
+            FieldPermissions fldPermission = new FieldPermissions();
+            fldPermission.ParentId = pr.Id;
+            fldPermission.SobjectType = fieldName.substringBefore('.');
+            fldPermission.Field = fieldName;
+            fldPermission.PermissionsRead = False;
+            fldPermission.PermissionsEdit = False;
+            if (existFP.get(fieldName) != null){
+                fldPermission.Id = existFP.get(fieldName);
+                system.debug('existFP:' + fldPermission.Id); 
+            }
+            if (fieldsAndCRUD.get(fieldName)[0] == True)  
+            {fldPermission.PermissionsRead = true;}
+            if (fieldsAndCRUD.get(fieldName)[1] == True)  
+            {fldPermission.PermissionsEdit = true;}
+            fieldPerms.add(fldPermission);	
+        }
+        
+        system.debug('object perms right before upsert:' + objPerms);
+        upsert objPerms;
+        
+        system.debug('field perms right before upsert:' + fieldPerms);
+        upsert fieldPerms;
+        
+    }
+    
+    
+     /*******************************************************************************************************
+    * @description Method that is used to set the appropriate permissions for the base grantee permissions found on the link below: 
+    * https://powerofus.force.com/s/article/fC-Security-GP-Community-User-Permissions
+    * 
+    * 
+    * @return Nothing
+    ********************************************************************************************************/
+    public void FCGranteeBasePerms(){
+        //Create the permission set and insert it so we can query on it. 
+        PermissionSet pr = new PermissionSet(Name='FC_Grantee_Base_Permissions007',Label='FC Grantee Base Permissions007');
+        insert pr;
+        String permSetName = pr.Id;
+        //We query on the Id because we know what the ID will be. This gets us the correct newly created permission set to work with. 
+        pr = [SELECT Id, Label, Name, Description FROM PermissionSet WHERE ID = :permSetName];
+        system.debug('pr id-' + pr.Id);
+                
+        //Object Permissions Setup
+        List<ObjectPermissions> op = new List<ObjectPermissions>();
+        op = [SELECT ID, SObjectType, ParentID FROM ObjectPermissions WHERE ParentId = :pr.Id];
+        Map<String, String> existOP = new Map<String, String>();
+        //existOP is utilized so we can work on profiles if needed as well as permission sets. 
+        for (ObjectPermissions eop : op){
+            String objname = eop.SobjectType;
+            String objid = eop.Id;
+            existOp.put(objname, objid);
+        }
+        List<ObjectPermissions> objPerms = new List<ObjectPermissions>();
+        Map<String, List<Boolean>> objectsAndCRUD = new Map<String, List<Boolean>>();
+        List<Map<String, List<Boolean>>> objectsAndCRUDcollection = new List <Map<String, List<Boolean>>>();
+        
+        //Field Permissions Setup
+        List<FieldPermissions> fp = new List<FieldPermissions>();
+		fp = [SELECT ID, SObjectType, Field, ParentID FROM FieldPermissions WHERE ParentId = :pr.Id];
+        Map<String, String> existFP = new Map<String, String>();
+        for (FieldPermissions efp : fp){
+            String fldname = efp.Field;
+            String fldid = efp.Id;
+            existFp.put(fldname, fldid);
+        }
+        List<FieldPermissions> fieldPerms = new List<FieldPermissions>();
+        Map<String, List<Boolean>> fieldsAndCRUD = new Map<String, List<Boolean>>();
+        List<Map<String, List<Boolean>>> FieldsAndFSLcollection = new List <Map<String, List<Boolean>>>();
+        
+ 
+        //========================================================
+        //ENTER YOUR OBJECTS and CRUD ACCESS BELOW
+        //========================================================   
+        
+            												//READ - CREATE - EDIT - DELETE
+            objectsAndCRUD.put('Account', new List<Boolean>{True, False, True, False});
+            objectsAndCRUD.put('Campaign', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('FGM_Portal__Campaign_Quiz__c', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('FGM_Portal__CommunityConfiguration__c', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('Contact', new List<Boolean>{True, True, True, False});
+            objectsAndCRUD.put('FGM_Portal__CustomHTML__c', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('Document', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('FGM_Portal__Quiz__c', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('FGM_Portal__FCPageLayout__c', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('FGM_Base__FGM_System_Values__c', new List<Boolean>{True, False, True, False});
+            objectsAndCRUD.put('FGM_Portal__Field_Value_Translation__c', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('FGM_Portal__Grantee_Budget_Line_Item__c', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('FGM_Portal__Grantee_Budget__c', new List<Boolean>{True, False, False, False}); //Doc bug. We need grantee budget read in order to have grantee budget line item read
+            objectsAndCRUD.put('Lead', new List<Boolean>{True, True, True, False});
+            objectsAndCRUD.put('Opportunity', new List<Boolean>{True, True, True, False});
+            objectsAndCRUD.put('FGM_Portal__Portal_Account__c', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('FGM_Portal__Portal_User__c', new List<Boolean>{True, True, True, False});
+            objectsAndCRUD.put('FGM_Portal__PortalUserRequestTeamMembers__c', new List<Boolean>{True, True, True, False});
+            objectsAndCRUD.put('FGM_Portal__Questions__c', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('FGM_Portal__Question_Attachment__c', new List<Boolean>{True, True, True, False});
+            objectsAndCRUD.put('FGM_Portal__Quiz_Questions__c', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('FGM_Portal__Recommendation__c', new List<Boolean>{True, True, True, False});
+            objectsAndCRUD.put('FGM_Portal__Related_List_Controller__c', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('FGM_Portal__Secure_Message__c', new List<Boolean>{True, True, True, False});
+            objectsAndCRUD.put('FGM_Portal__StateCountryConfig__c', new List<Boolean>{True, False, False, False});
+           
+            // objectsAndCRUD.put('Users', new List<Boolean>{False, False, False, False});
+            // objectsAndCRUD.put('OpportunityTeamMember', new List<Boolean>{True, False, False, False});
+
+        
+        objectsAndCRUDcollection.add(objectsAndCRUD);
+        system.debug('objectsAndCRUDcollection after we insert two objects' + objectsAndCRUDcollection);
+        
+        //========================================================
+        //ENTER YOUR FIELD AND READ/EDIT ACCESS BELOW
+        //========================================================   
+        
+        	fieldsAndCRUD.put('Account.FGM_Base__EIN__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Campaign.IsActive', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Campaign.FGM_Portal__Parameters__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Campaign.FGM_Portal__Application_Quiz__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Campaign.FGM_Portal__Application_Type__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Campaign.Description', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Campaign.FGM_Portal__Email__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Campaign.EndDate', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Campaign.FGM_Portal__Description__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Campaign.FGM_Portal__LOI_Prameters__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Campaign.FGM_Portal__LOI_Quiz__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Campaign.FGM_Portal__No_of_Recommendation__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Campaign.StartDate', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Campaign.Status', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Campaign.Type', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Campaign.FGM_Portal__Visibility__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Campaign_Quiz__c.FGM_Portal__Rich_Instructional_Text__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Campaign_Quiz__c.FGM_Portal__Parameters__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__CommunityConfiguration__c.FGM_Portal__JsonData__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Contact.Account', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Contact.Email', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('Contact.FGM_Portal__Username__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__CustomHTML__c.FGM_Portal__RichDescription__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__CustomHTML__c.FGM_Portal__Language__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Quiz__c.FGM_Portal__Is_Active__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Quiz__c.FGM_Portal__Introduction_Text__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__FCPageLayout__c.FGM_Portal__ObjectName__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__FGM_System_Values__c.FGM_Base__System_Field_Name__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Base__FGM_System_Values__c.FGM_Base__System_Values_Numeric__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Base__FGM_System_Values__c.FGM_Base__System_Values_Text__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Field_Value_Translation__c.FGM_Portal__Translation_Value__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Lead.Address', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('Lead.Email', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('Lead.FGM_Portal__Quiz__c ', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('Lead.FGM_Base__Request_Number__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Lead.FGM_Base__Request_Number_Apex__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('Lead.FGM_Base__Request_Number_Legacy__c  ', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('Lead.FGM_Base__Submission_Date__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('Lead.FGM_Base__Submitted_By__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('Opportunity.Account', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('Opportunity.FGM_Portal__ConsultantUser__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('Opportunity.FGM_Base__End_Date__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('Opportunity.Campaign', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('Opportunity.FGM_Portal__Quiz__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('Opportunity.FGM_Base__Request_Number__c    ', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Opportunity.FGM_Base__Request_Number_Apex__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('Opportunity.FGM_Base__Request_Number_Legacy__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('Opportunity.FGM_Base__Start_Date__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('Opportunity.FGM_Base__Submitted_By__c', new List<Boolean>{True, True});
+            //fieldsAndCRUD.put('Opportunity.FGM_Portal__ContactRoleID__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_Account__c.FGM_Portal__Account__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Account__c  ', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__IsActive__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Terms_And_Conditions__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Approval_Status__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__City__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Confirm_Password__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Confirmation_Code__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Contact__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Country__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Domain__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__EIN__c  ', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Email__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Fax__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__FirstName__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__IsCreatedByOpportunityTeamMember__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__LastName__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Organization_Legal_Name__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Phone__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Portal_Account__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__GrantedPortalAccess__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__ProfileType__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Return_URL__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Salutation__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Security_Question__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__State__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__State_List__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Street_New__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Title__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__User_Profile__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Zip_Code__c', new List<Boolean>{True, True});   
+            fieldsAndCRUD.put('FGM_Portal__PortalUserRequestTeamMembers__c.FGM_Portal__IsShared__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__PortalUserRequestTeamMembers__c.FGM_Portal__UserRole__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Questions__c.FGM_Portal__AttachmentNameFormula__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Questions__c.FGM_Portal__Help_Tip__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Questions__c.FGM_Portal__Language__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Questions__c.FGM_Portal__Parent_QuestionID__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Questions__c.FGM_Portal__RichPostText__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Questions__c.FGM_Portal__RichPreText__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Questions__c.FGM_Portal__RichQuestion__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Questions__c.FGM_Portal__Type__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Question_Attachment__c.FGM_Portal__Amendment__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Question_Attachment__c.FGM_Portal__Benchmark_del__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Question_Attachment__c.FGM_Portal__Description__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Question_Attachment__c.FGM_Portal__GranteeReport__c', new List<Boolean>{True, True});    
+            fieldsAndCRUD.put('FGM_Portal__Question_Attachment__c.FGM_Portal__Inquiry__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Question_Attachment__c.FGM_Portal__Question__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Question_Attachment__c.FGM_Portal__Opportunity__c  ', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Quiz_Questions__c.FGM_Portal__Can_upload_after_submission__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Quiz_Questions__c.FGM_Portal__Field__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Quiz_Questions__c.FGM_Portal__Hide_Post_Text__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Quiz_Questions__c.FGM_Portal__Hide_Pre_Text__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Quiz_Questions__c.FGM_Portal__Language__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Quiz_Questions__c.FGM_Portal__Required__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Quiz_Questions__c.FGM_Portal__Sort_Order__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Quiz_Questions__c.FGM_Portal__Tab__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Recommendation__c.FGM_Portal__Status__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__of_records_to_display__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__Associated_FC_Portal_Type__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__Associated_Tab_Type__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__BaseUrl__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__Cloned_from__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__EnableAmendment__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__FieldHeaders__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__Field_Labels_Long__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__FieldNames__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__Field_Names_Long__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__Hide_Edit_Link__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__RichInstructionalText__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__Language__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__ParentObject__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__ShowDeleteLink__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__ShowNewButton__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__Show_Tab_to_Individual_Users__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__Show_Tab_to_Organization_Users__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__SortField__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__SortFieldOrder__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Secure_Message__c.FGM_Portal__Body__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Secure_Message__c.FGM_Portal__Proposals__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Secure_Message__c.FGM_Portal__Recipient__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Secure_Message__c.FGM_Portal__RefId__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Secure_Message__c.FGM_Portal__Sender__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Secure_Message__c.FGM_Portal__Subject__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__StateCountryConfig__c.FGM_Portal__PicklistValues__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('User.FGM_Portal__Portal_Account_Admin__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('OpportunityTeamMember.FGM_Portal__ContactRoleID__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('Task.FGM_Portal__ResponseBy__c', new List<Boolean>{True, False});
+        	//fieldsAndCRUD.put('User.FGM_Portal__ProfileType__c', new List<Boolean>{False, False});
+        	fieldsAndCRUD.put('User.FGM_Portal__Return_URL__c', new List<Boolean>{True, False});
+        	fieldsAndCRUD.put('User.FGM_Portal__UserEmail__c', new List<Boolean>{True, False});
+        	fieldsAndCRUD.put('User.FGM_Portal__UserProfile__c', new List<Boolean>{True, False});
+        	//fieldsAndCRUD.put('OpportunityContactRole.ContactId', new List<Boolean>{True, True});
+        	//fieldsAndCRUD.put('OpportunityContactRole.OpportunityID', new List<Boolean>{True, True});
+        	//fieldsAndCRUD.put('OpportunityContactRole.IsPrimary', new List<Boolean>{True, True});
+        	//fieldsAndCRUD.put('OpportunityContactRole.Role', new List<Boolean>{True, True});
+        	//fieldsAndCRUD.put('OpportunityTeamMember.FGM_Portal__ContactRoleID__c', new List<Boolean>{True, True});
+			FieldsAndFSLcollection.add(fieldsAndCRUD);
+        
+        //Call the method to preform the logic of inserting the permissions based on the above object and field level declarations
+        logicPerms(objectsAndCRUD, pr, existOP, objPerms, existFP, fieldsAndCRUD, fieldPerms);
+
+        
+    }
+    
+    
+    
+    
+    
+       
+     /*******************************************************************************************************
+    * @description Method that is used to set the appropriate permissions for the Amendments permissions found on the link below: 
+    * https://powerofus.force.com/s/article/fC-Community-User-Permissions-Amendments
+    * 
+    * 
+    * @return Nothing
+    ********************************************************************************************************/
+        public  void FCAmendmentsPerms(){
+        PermissionSet pr = new PermissionSet(Name='FC_Amendments_Permissions007',Label='FC Amendments Permissions007');
+        insert pr;
+        String permSetName = pr.Id;
+        pr = [SELECT Id, Label, Name, Description FROM PermissionSet WHERE ID = :permSetName];
+        system.debug('pr id-' + pr.Id);
+                
+        //Object Permissions Setup
+        List<ObjectPermissions> op = new List<ObjectPermissions>();
+        op = [SELECT ID, SObjectType, ParentID FROM ObjectPermissions WHERE ParentId = :pr.Id];
+        Map<String, String> existOP = new Map<String, String>();
+        for (ObjectPermissions eop : op){
+            String objname = eop.SobjectType;
+            String objid = eop.Id;
+            existOp.put(objname, objid);
+        }
+        List<ObjectPermissions> objPerms = new List<ObjectPermissions>();
+        Map<String, List<Boolean>> objectsAndCRUD = new Map<String, List<Boolean>>();
+        List<Map<String, List<Boolean>>> objectsAndCRUDcollection = new List <Map<String, List<Boolean>>>();
+        
+        //Field Permissions Setup
+        List<FieldPermissions> fp = new List<FieldPermissions>();
+		fp = [SELECT ID, SObjectType, Field, ParentID FROM FieldPermissions WHERE ParentId = :pr.Id];
+        Map<String, String> existFP = new Map<String, String>();
+        for (FieldPermissions efp : fp){
+            String fldname = efp.Field;
+            String fldid = efp.Id;
+            existFp.put(fldname, fldid);
+        }
+        List<FieldPermissions> fieldPerms = new List<FieldPermissions>();
+        Map<String, List<Boolean>> fieldsAndCRUD = new Map<String, List<Boolean>>();
+        List<Map<String, List<Boolean>>> FieldsAndFSLcollection = new List <Map<String, List<Boolean>>>();
+        
+ 
+        //========================================================
+        //ENTER YOUR OBJECTS and CRUD ACCESS BELOW
+        //========================================================   
+        
+        
+        
+        //if we are also using amendements -this is signified by the passed in paramter to the main/only method in this class.
+            objectsAndCRUD.put('FGM_Portal__Amendment__c', new List<Boolean>{True, True, True, False});
+        
+        
+        objectsAndCRUDcollection.add(objectsAndCRUD);
+        system.debug('objectsAndCRUDcollection after we insert two objects' + objectsAndCRUDcollection);
+        
+        //========================================================
+        //ENTER YOUR FIELD AND READ/EDIT ACCESS BELOW
+        //========================================================   
+   
+            fieldsAndCRUD.put('FGM_Portal__Amendment__c.FGM_Portal__Account__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Amendment__c.FGM_Portal__Billing_Mailing_Country__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Amendment__c.FGM_Portal__Billing_Mailing_State__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Amendment__c.FGM_Portal__Contact__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Amendment__c.FGM_Portal__Contact_Email__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Amendment__c.FGM_Portal__Current_Award_Amount__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Amendment__c.FGM_Portal__Current_Grant_End_Date__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Amendment__c.FGM_Portal__Current_Grant_Start_Date__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Amendment__c.FGM_Portal__Description__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Amendment__c.FGM_Portal__Field_To_Be_Edited__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Amendment__c.FGM_Portal__New_Account_Name__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Amendment__c.FGM_Portal__ParentRequest__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Amendment__c.FGM_Portal__Payment__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Amendment__c.FGM_Portal__Phone__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Amendment__c.FGM_Portal__RequestedAmount__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Amendment__c.FGM_Portal__Proposed_Grant_End_Date__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Amendment__c.FGM_Portal__Proposed_Grant_Start_Date__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Amendment__c.FGM_Portal__Shipping_Other_Country__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Amendment__c.FGM_Portal__Shipping_Other_State__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Amendment__c.FGM_Portal__StageName__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Amendment__c.FGM_Portal__Submission_Date__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Amendment__c.FGM_Portal__Submitted_By__c', new List<Boolean>{True, True});
+            FieldsAndFSLcollection.add(fieldsAndCRUD);
+        
+             //Call the method to preform the logic of inserting the permissions based on the above object and field level declarations
+             logicPerms(objectsAndCRUD, pr, existOP, objPerms, existFP, fieldsAndCRUD, fieldPerms);
+      
+    
+    }
+    
+    
+
+    /*******************************************************************************************************
+    * @description Method that is used to set the appropriate permissions for benchmark permissions found on the link below: 
+    * https://powerofus.force.com/s/article/fC-Security-GP-Community-User-Permissions-Benchmarks
+    * 
+    * 
+    * @return Nothing
+    ********************************************************************************************************/   
+        public  void FCBenchMarkPerms(){
+        PermissionSet pr = new PermissionSet(Name='FC_Benchmark_Base_Permissions007',Label='FC Benchmark Base Permissions007');
+        insert pr;
+        String permSetName = pr.Id;
+        pr = [SELECT Id, Label, Name, Description FROM PermissionSet WHERE ID = :permSetName];
+        system.debug('pr id-' + pr.Id);
+                
+        //Object Permissions Setup
+        List<ObjectPermissions> op = new List<ObjectPermissions>();
+        op = [SELECT ID, SObjectType, ParentID FROM ObjectPermissions WHERE ParentId = :pr.Id];
+        Map<String, String> existOP = new Map<String, String>();
+        for (ObjectPermissions eop : op){
+            String objname = eop.SobjectType;
+            String objid = eop.Id;
+            existOp.put(objname, objid);
+        }
+        List<ObjectPermissions> objPerms = new List<ObjectPermissions>();
+        Map<String, List<Boolean>> objectsAndCRUD = new Map<String, List<Boolean>>();
+        List<Map<String, List<Boolean>>> objectsAndCRUDcollection = new List <Map<String, List<Boolean>>>();
+        
+        //Field Permissions Setup
+        List<FieldPermissions> fp = new List<FieldPermissions>();
+		fp = [SELECT ID, SObjectType, Field, ParentID FROM FieldPermissions WHERE ParentId = :pr.Id];
+        Map<String, String> existFP = new Map<String, String>();
+        for (FieldPermissions efp : fp){
+            String fldname = efp.Field;
+            String fldid = efp.Id;
+            existFp.put(fldname, fldid);
+        }
+        List<FieldPermissions> fieldPerms = new List<FieldPermissions>();
+        Map<String, List<Boolean>> fieldsAndCRUD = new Map<String, List<Boolean>>();
+        List<Map<String, List<Boolean>>> FieldsAndFSLcollection = new List <Map<String, List<Boolean>>>();
+        
+ 
+        //========================================================
+        //ENTER YOUR OBJECTS and CRUD ACCESS BELOW
+        //========================================================   
+        
+        
+        
+            objectsAndCRUD.put('Opportunity', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('FGM_Base__Benchmark__c', new List<Boolean>{True, False, True, False});
+            objectsAndCRUD.put('FGM_Base__Benchmark_Update__c', new List<Boolean>{True, True, True, False});  
+            objectsAndCRUD.put('FGM_Portal__Recommendation__c', new List<Boolean>{True, True, True, False});
+        
+       
+        
+        objectsAndCRUDcollection.add(objectsAndCRUD);
+        system.debug('objectsAndCRUDcollection after we insert two objects' + objectsAndCRUDcollection);
+        
+        //========================================================
+        //ENTER YOUR FIELD AND READ/EDIT ACCESS BELOW
+        //========================================================   
+        
+
+        //Start of Configure Community User Permissions on the Grantee Portal When Using Benchmarks
+        //https://powerofus.force.com/s/article/fC-Security-GP-Community-User-Permissions-Benchmarks
+        
+            //System.DmlException: Upsert failed. First exception on row 0; 
+            //first error: FIELD_INTEGRITY_EXCEPTION, Permission Read FGM_Base__Benchmark__c depends on permission(s): Read Opportunity: []
+            fieldsAndCRUD.put('FGM_Base__Benchmark__c.FGM_Base__Benchmark_Type__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Benchmark__c.FGM_Base__Completed__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Benchmark__c.FGM_Base__Completion_Date__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Benchmark__c.FGM_Base__Description__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Benchmark__c.FGM_Base__Due_Date__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Benchmark__c.FGM_Base__Include_in_Agreement__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Benchmark__c.FGM_Base__Number_Goal__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Benchmark__c.FGM_Base__Organization__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Benchmark__c.FGM_Base__Percentage_Goal__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Benchmark__c.FGM_Base__Request_Number__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Benchmark__c.FGM_Base__Request_Update_on_Report__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Benchmark__c.FGM_Base__Required__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Benchmark__c.FGM_Base__Status__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Base__Benchmark_Update__c.FGM_Base__Amount_Update__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Base__Benchmark_Update__c.FGM_Base__Benchmark__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Base__Benchmark_Update__c.FGM_Base__Completed__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Base__Benchmark_Update__c.FGM_Base__Date_Updated__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Base__Benchmark_Update__c.FGM_Base__Grantee_Report__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Base__Benchmark_Update__c.FGM_Base__Long_Narrative__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Base__Benchmark_Update__c.FGM_Base__Number_Completed__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Base__Benchmark_Update__c.FGM_Base__Number_Update__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Base__Benchmark_Update__c.FGM_Base__Percentage_Completed__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Base__Benchmark_Update__c.FGM_Base__Percentage_Update__c', new List<Boolean>{True, True});
+            FieldsAndFSLcollection.add(fieldsAndCRUD);
+             
+        //Call the method to preform the logic of inserting the permissions based on the above object and field level declarations
+        logicPerms(objectsAndCRUD, pr, existOP, objPerms, existFP, fieldsAndCRUD, fieldPerms);
+
+        
+        //END OF Configure Community User Permissions on the Grantee Portal When Using Benchmarks
+        //https://powerofus.force.com/s/article/fC-Security-GP-Community-User-Permissions-Benchmarks
+
+      
+      
+    }
+    
+    
+    
+    /*******************************************************************************************************
+    * @description Method that is used to set the appropriate permissions for Grantee Reports permissions found on the link below: 
+    * https://powerofus.force.com/s/article/fC-Security-GP-Community-User-Permissions-Grantee-Report
+    * 
+    * 
+    * @return Nothing
+    ********************************************************************************************************/       
+    public void FCGranteeReportPerms(){
+
+        PermissionSet pr = new PermissionSet(Name='FC_Grantee_Report_Base_Permissions007',Label='FC Grantee Report Base Permissions007');
+        insert pr;
+        String permSetName = pr.Id;
+        pr = [SELECT Id, Label, Name, Description FROM PermissionSet WHERE ID = :permSetName];
+        system.debug('pr id-' + pr.Id);
+                
+        //Object Permissions Setup
+        List<ObjectPermissions> op = new List<ObjectPermissions>();
+        op = [SELECT ID, SObjectType, ParentID FROM ObjectPermissions WHERE ParentId = :pr.Id];
+        Map<String, String> existOP = new Map<String, String>();
+        for (ObjectPermissions eop : op){
+            String objname = eop.SobjectType;
+            String objid = eop.Id;
+            existOp.put(objname, objid);
+        }
+        List<ObjectPermissions> objPerms = new List<ObjectPermissions>();
+        Map<String, List<Boolean>> objectsAndCRUD = new Map<String, List<Boolean>>();
+        List<Map<String, List<Boolean>>> objectsAndCRUDcollection = new List <Map<String, List<Boolean>>>();
+        
+        //Field Permissions Setup
+        List<FieldPermissions> fp = new List<FieldPermissions>();
+		fp = [SELECT ID, SObjectType, Field, ParentID FROM FieldPermissions WHERE ParentId = :pr.Id];
+        Map<String, String> existFP = new Map<String, String>();
+        for (FieldPermissions efp : fp){
+            String fldname = efp.Field;
+            String fldid = efp.Id;
+            existFp.put(fldname, fldid);
+        }
+        List<FieldPermissions> fieldPerms = new List<FieldPermissions>();
+        Map<String, List<Boolean>> fieldsAndCRUD = new Map<String, List<Boolean>>();
+        List<Map<String, List<Boolean>>> FieldsAndFSLcollection = new List <Map<String, List<Boolean>>>();
+        
+ 
+        //========================================================
+        //ENTER YOUR OBJECTS and CRUD ACCESS BELOW
+        //========================================================   
+        
+       
+       
+            objectsAndCRUD.put('FGM_Portal__Quiz__c', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('Opportunity', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('FGM_Portal__Grantee_Budget__c', new List<Boolean>{True, True, True, False});
+            objectsAndCRUD.put('FGM_Portal__Grantee_Budget_Category__c', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('FGM_Portal__Grantee_Budget_Configuration__c', new List<Boolean>{True, False, False, False});  
+            objectsAndCRUD.put('FGM_Portal__Grantee_Budget_Line_Item__c', new List<Boolean>{True, True, True, False});    
+            objectsAndCRUD.put('FGM_Portal__Grantee_Budget_Update__c', new List<Boolean>{True, True, True, False});   
+            objectsAndCRUD.put('FGM_Portal__Grantee_Budget_Update_By_Category__c', new List<Boolean>{True, True, True, False});   
+            objectsAndCRUD.put('FGM_Base__Grantee_Report__c', new List<Boolean>{True, True, True, False});     
+            //Recommendations says to go here, but its already done in the prior step
+        
+        
+        objectsAndCRUDcollection.add(objectsAndCRUD);
+        system.debug('objectsAndCRUDcollection after we insert two objects' + objectsAndCRUDcollection);
+        
+        //========================================================
+        //ENTER YOUR FIELD AND READ/EDIT ACCESS BELOW
+        //========================================================   
+
+        //Start of Configure Community User Permissions on the Grantee Portal When Using Grantee Reports
+        //https://powerofus.force.com/s/article/fC-Security-GP-Community-User-Permissions-Grantee-Report
+        
+            //System.DmlException: Upsert failed. First exception on row 2; first error: FIELD_INTEGRITY_EXCEPTION, 
+            //Permission Read FGM_Portal__Grantee_Budget_Configuration__c depends on permission(s): Read FGM_Portal__Quiz__c: []
+            //System.DmlException: Upsert failed. First exception on row 4; first error: FIELD_INTEGRITY_EXCEPTION, 
+            //Permission Read FGM_Portal__Grantee_Budget_Line_Item__c depends on permission(s): Read Opportunity: []
+
+            fieldsAndCRUD.put('FGM_Portal__Grantee_Budget__c.FGM_Portal__Total_Budget_Amount__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Grantee_Budget_Category__c.FGM_Portal__IsActive__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Grantee_Budget_Category__c.FGM_Portal__Parent_Category__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Grantee_Budget_Configuration__c.FGM_Portal__Category__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Grantee_Budget_Configuration__c.FGM_Portal__Related_List_Controller__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Grantee_Budget_Configuration__c.FGM_Portal__Sort_Order__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Grantee_Budget_Line_Item__c.FGM_Portal__Amount__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Grantee_Budget_Line_Item__c.FGM_Portal__Total_Remaining__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Grantee_Budget_Line_Item__c.FGM_Portal__Budget_Configuration__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Grantee_Budget_Line_Item__c.FGM_Portal__Category__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Grantee_Budget_Line_Item__c.FGM_Portal__Total_Spent__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Grantee_Budget_Line_Item__c.FGM_Portal__Note__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Grantee_Budget_Update__c.FGM_Portal__Approved_Budget_New__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Grantee_Budget_Update__c.FGM_Portal__Available_Budget__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Grantee_Budget_Update__c.FGM_Portal__Comment__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Grantee_Budget_Update__c.FGM_Portal__Current_Period_Expenses__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Grantee_Budget_Update__c.FGM_Portal__Grantee_Budget_Line_Item__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Grantee_Budget_Update__c.FGM_Portal__Expenditures_to_Date__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Grantee_Budget_Update__c.FGM_Portal__Grantee_Budget_Category__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Grantee_Budget_Update__c.FGM_Portal__Percentage_Used__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Grantee_Budget_Update_By_Category__c.FGM_Portal__Amount__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Grantee_Budget_Update_By_Category__c.FGM_Portal__Grantee_Budget_Line_Item__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Base__Grantee_Report__c.FGM_Base__Address__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Grantee_Report__c.FGM_Base__Award_Date__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Grantee_Report__c.FGM_Base__Comment__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Grantee_Report__c.FGM_Base__Contact_Organization__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Grantee_Report__c.FGM_Base__Display_Benchmark__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Grantee_Report__c.FGM_Base__Due_Date__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Grantee_Report__c.FGM_Base__Year__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Grantee_Report__c.FGM_Base__Fax__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Grantee_Report__c.FGM_Base__Final_Report__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Grantee_Report__c.FGM_Base__Impact__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Grantee_Report__c.FGM_Base__Interim_Report__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Grantee_Report__c.FGM_Base__Is_Overdue__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Grantee_Report__c.FGM_Base__Name__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Grantee_Report__c.FGM_Base__Organization__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Grantee_Report__c.FGM_Base__Phone__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Grantee_Report__c.FGM_Base__Remind_Awardee__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Grantee_Report__c.FGM_Base__Remind_Staff__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Grantee_Report__c.FGM_Base__Report_Contact__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Grantee_Report__c.FGM_Base__Request_Number__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Grantee_Report__c.FGM_Base__Type__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Base__Grantee_Report__c.FGM_Base__Status__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Base__Grantee_Report__c.FGM_Base__Submission_Date__c', new List<Boolean>{True, True});        
+            fieldsAndCRUD.put('FGM_Base__Grantee_Report__c.FGM_Base__Submitted_By__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Base__Grantee_Report__c.FGM_Base__Title__c', new List<Boolean>{True, False});
+            FieldsAndFSLcollection.add(fieldsAndCRUD);
+        //Call the method to preform the logic of inserting the permissions based on the above object and field level declarations
+               logicPerms(objectsAndCRUD, pr, existOP, objPerms, existFP, fieldsAndCRUD, fieldPerms);
+
+    
+    }
+    
+    
+    /*******************************************************************************************************
+    * @description Method that is used to set the appropriate permissions for the Reviewer portal permissions found on the link below: 
+    * https://powerofus.force.com/s/article/fC-Security-RP-Community-User-Permissions
+    * 
+    * 
+    * @return Nothing
+    ********************************************************************************************************/ 
+    public void FCReviewerPerms(){
+
+        PermissionSet pr = new PermissionSet(Name='FC_Reviewer_Perms_Base_Permissions007',Label='FC Reviewer Perms Base Permissions007');
+        insert pr;
+        String permSetName = pr.Id;
+        pr = [SELECT Id, Label, Name, Description FROM PermissionSet WHERE ID = :permSetName];
+        system.debug('pr id-' + pr.Id);
+                
+        //Object Permissions Setup
+        List<ObjectPermissions> op = new List<ObjectPermissions>();
+        op = [SELECT ID, SObjectType, ParentID FROM ObjectPermissions WHERE ParentId = :pr.Id];
+        Map<String, String> existOP = new Map<String, String>();
+        for (ObjectPermissions eop : op){
+            String objname = eop.SobjectType;
+            String objid = eop.Id;
+            existOp.put(objname, objid);
+        }
+        List<ObjectPermissions> objPerms = new List<ObjectPermissions>();
+        Map<String, List<Boolean>> objectsAndCRUD = new Map<String, List<Boolean>>();
+        List<Map<String, List<Boolean>>> objectsAndCRUDcollection = new List <Map<String, List<Boolean>>>();
+        
+        //Field Permissions Setup
+        List<FieldPermissions> fp = new List<FieldPermissions>();
+		fp = [SELECT ID, SObjectType, Field, ParentID FROM FieldPermissions WHERE ParentId = :pr.Id];
+        Map<String, String> existFP = new Map<String, String>();
+        for (FieldPermissions efp : fp){
+            String fldname = efp.Field;
+            String fldid = efp.Id;
+            existFp.put(fldname, fldid);
+        }
+        List<FieldPermissions> fieldPerms = new List<FieldPermissions>();
+        Map<String, List<Boolean>> fieldsAndCRUD = new Map<String, List<Boolean>>();
+        List<Map<String, List<Boolean>>> FieldsAndFSLcollection = new List <Map<String, List<Boolean>>>();
+        
+ 
+   //========================================================
+        //ENTER YOUR OBJECTS and CRUD ACCESS BELOW
+        //========================================================   
+                
+            objectsAndCRUD.put('Account', new List<Boolean>{True, False, True, False});
+            objectsAndCRUD.put('Contact', new List<Boolean>{True, True, True, False});
+            objectsAndCRUD.put('Campaign', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('FGM_Portal__Campaign_Quiz__c', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('FGM_Portal__CommunityConfiguration__c', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('FGM_Portal__CustomHTML__c', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('Document', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('FC_Reviewer__External_Review__c', new List<Boolean>{True, False, True, False});              
+            objectsAndCRUD.put('FGM_Portal__Quiz__c', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('FGM_Portal__FCPageLayout__c', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('FGM_Portal__Field_Value_Translation__c', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('Opportunity', new List<Boolean>{True, False, False, False});
+	        objectsAndCRUD.put('FGM_Portal__Grantee_Budget__c', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('FGM_Portal__Grantee_Budget_Line_Item__c', new List<Boolean>{True, False, False, False});    
+            objectsAndCRUD.put('Lead', new List<Boolean>{True, False, False, False});
+            //opportunity team builder is missing and should go here 1 field total read on ID
+            objectsAndCRUD.put('FGM_Portal__Portal_Account__c', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('FGM_Portal__Portal_User__c', new List<Boolean>{True, True, True, False});
+            objectsAndCRUD.put('FGM_Portal__PortalUserRequestTeamMembers__c', new List<Boolean>{True, True, True, False});
+            objectsAndCRUD.put('FGM_Portal__Questions__c', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('FGM_Portal__Question_Attachment__c', new List<Boolean>{True, True, True, False});
+            objectsAndCRUD.put('FGM_Portal__Quiz_Questions__c', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('FGM_Portal__Recommendation__c', new List<Boolean>{True, True, True, False});
+            objectsAndCRUD.put('FGM_Portal__Related_List_Controller__c', new List<Boolean>{True, False, False, False});
+            objectsAndCRUD.put('FGM_Portal__Secure_Message__c', new List<Boolean>{True, True, True, False});
+            objectsAndCRUD.put('FGM_Portal__StateCountryConfig__c', new List<Boolean>{True, False, False, False});        
+	        objectsAndCRUDcollection.add(objectsAndCRUD);
+        
+      //========================================================
+        //ENTER YOUR FIELD AND READ/EDIT ACCESS BELOW
+        //https://powerofus.force.com/s/article/fC-Security-RP-Community-User-Permissions
+        //========================================================   
+
+            fieldsAndCRUD.put('Account.FGM_Base__EIN__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Contact.Email', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('Contact.Account', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Contact.FGM_Portal__Username__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Campaign.FGM_Portal__Application_Quiz__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Campaign.FGM_Portal__Application_Type__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Campaign.FGM_Portal__Description__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Campaign.FGM_Portal__Email__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Campaign.EndDate', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Campaign.FGM_Portal__Description__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Campaign.Description', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Campaign.FGM_Portal__LOI_Prameters__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Campaign.FGM_Portal__LOI_Quiz__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Campaign.FGM_Portal__No_of_Recommendation__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Campaign.StartDate', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Campaign.FGM_Portal__Visibility__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Campaign_Quiz__c.FGM_Portal__Rich_Instructional_Text__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Campaign_Quiz__c.FGM_Portal__Parameters__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__CommunityConfiguration__c.FGM_Portal__JsonData__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__CustomHTML__c.FGM_Portal__RichDescription__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__CustomHTML__c.FGM_Portal__Language__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FC_Reviewer__External_Review__c.FC_Reviewer__Deadline__c', new List<Boolean>{True, False});
+            //fieldsAndCRUD.put('FC_Reviewer__External_Review__c.Name', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FC_Reviewer__External_Review__c.FC_Reviewer__Lead__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FC_Reviewer__External_Review__c.FC_Reviewer__Opportunity__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FC_Reviewer__External_Review__c.FC_Reviewer__Status__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FC_Reviewer__External_Review__c.FC_Reviewer__Submitted_Date__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Quiz__c.FGM_Portal__Is_Active__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Quiz__c.FGM_Portal__Introduction_Text__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__FCPageLayout__c.FGM_Portal__ObjectName__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__FCPageLayout__c.FGM_Portal__RecordTypeId__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Field_Value_Translation__c.FGM_Portal__Translation_Value__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Opportunity.FC_Reviewer__Campaign_Quiz_Id__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Opportunity.FGM_Portal__ConsultantUser__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Opportunity.Campaign', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Opportunity.FGM_Portal__Quiz__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Opportunity.FGM_Base__Submitted_By__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('OpportunityTeamMember.FGM_Portal__ContactRoleID__c', new List<Boolean>{True, False});
+            //fieldsAndCRUD.put('Opportunity.FGM_Portal__ContactRoleID__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Grantee_Budget_Line_Item__c.FGM_Portal__Amount__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Grantee_Budget_Line_Item__c.FGM_Portal__Budget_Configuration__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Grantee_Budget_Line_Item__c.FGM_Portal__Category__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Grantee_Budget_Line_Item__c.FGM_Portal__Note__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Lead.FGM_Portal__Quiz__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('Lead.FGM_Base__Submitted_By__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Portal_Account__c.FGM_Portal__Account__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Account__c  ', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__IsActive__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Terms_And_Conditions__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Approval_Status__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__City__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Confirm_Password__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Confirmation_Code__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Contact__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Country__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Domain__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__EIN__c  ', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Email__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Fax__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__FirstName__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__IsCreatedByOpportunityTeamMember__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__LastName__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Organization_Legal_Name__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Phone__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Portal_Account__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__GrantedPortalAccess__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__ProfileType__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Return_URL__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Salutation__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Security_Question__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__State__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__State_List__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Street_New__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Title__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__User_Profile__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Portal_User__c.FGM_Portal__Zip_Code__c', new List<Boolean>{True, True});   
+            fieldsAndCRUD.put('FGM_Portal__PortalUserRequestTeamMembers__c.FGM_Portal__IsShared__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__PortalUserRequestTeamMembers__c.FGM_Portal__UserRole__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Questions__c.FGM_Portal__AttachmentNameFormula__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Questions__c.FGM_Portal__Help_Tip__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Questions__c.FGM_Portal__Language__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Questions__c.FGM_Portal__Parent_QuestionID__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Questions__c.FGM_Portal__RichPostText__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Questions__c.FGM_Portal__RichPreText__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Questions__c.FGM_Portal__Quiz__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Questions__c.FGM_Portal__RichQuestion__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Questions__c.FGM_Portal__Type__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Question_Attachment__c.FGM_Portal__Amendment__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Question_Attachment__c.FGM_Portal__Benchmark_del__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Question_Attachment__c.FGM_Portal__Description__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Question_Attachment__c.FGM_Portal__GranteeReport__c', new List<Boolean>{True, False});    
+            fieldsAndCRUD.put('FGM_Portal__Question_Attachment__c.FGM_Portal__Inquiry__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Question_Attachment__c.FC_Reviewer__External_Review__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Question_Attachment__c.FGM_Portal__Question__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Question_Attachment__c.FGM_Portal__Opportunity__c  ', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Quiz_Questions__c.FGM_Portal__Can_upload_after_submission__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Quiz_Questions__c.FGM_Portal__Field__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Quiz_Questions__c.FGM_Portal__Hide_Post_Text__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Quiz_Questions__c.FC_Reviewer__Hide_Post_Text__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Quiz_Questions__c.FGM_Portal__Hide_Pre_Text__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Quiz_Questions__c.FC_Reviewer__Hide_Pre_Text__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Quiz_Questions__c.FGM_Portal__Language__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Quiz_Questions__c.FGM_Portal__Required__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Quiz_Questions__c.FGM_Portal__Sort_Order__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Quiz_Questions__c.FGM_Portal__Tab__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Recommendation__c.FGM_Portal__Status__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__of_records_to_display__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__Associated_FC_Portal_Type__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__Associated_Tab_Type__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__BaseUrl__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__Cloned_from__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__EnableAmendment__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__FieldHeaders__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__Field_Labels_Long__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__FieldNames__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__Field_Names_Long__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__Hide_Edit_Link__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__RichInstructionalText__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__Language__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__ParentObject__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__ShowDeleteLink__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__ShowNewButton__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__Show_Tab_to_Individual_Users__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__Show_Tab_to_Organization_Users__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__SortField__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Related_List_Controller__c.FGM_Portal__SortFieldOrder__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('FGM_Portal__Secure_Message__c.FGM_Portal__Body__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Secure_Message__c.FGM_Portal__Proposals__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Secure_Message__c.FGM_Portal__Recipient__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Secure_Message__c.FGM_Portal__RefId__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Secure_Message__c.FGM_Portal__Sender__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__Secure_Message__c.FGM_Portal__Subject__c', new List<Boolean>{True, True});
+            fieldsAndCRUD.put('FGM_Portal__StateCountryConfig__c.FGM_Portal__PicklistValues__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('User.FGM_Portal__Portal_Account_Admin__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('User.FGM_Portal__ProfileType__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('User.FGM_Portal__Return_URL__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('User.FGM_Portal__UserEmail__c', new List<Boolean>{True, False});
+            fieldsAndCRUD.put('User.FGM_Portal__UserProfile__c', new List<Boolean>{True, False});
+
+ 			FieldsAndFSLcollection.add(fieldsAndCRUD);
+        		
+        //Call the method to preform the logic of inserting the permissions based on the above object and field level declarations
+            logicPerms(objectsAndCRUD, pr, existOP, objPerms, existFP, fieldsAndCRUD, fieldPerms);
+
+    
+    }
+    
+    
+}
