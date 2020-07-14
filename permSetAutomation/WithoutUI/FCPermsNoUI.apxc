@@ -123,7 +123,7 @@ END ANONYMOUS BLOCK
 ********************************************************************************************************/
     public void FCGranteeBasePerms(){
         //Create the permission set and insert it so we can query on it. 
-        PermissionSet pr = new PermissionSet(Name='FC_Grantee_Base_Permissions001',Label='FC Grantee Base Permissions001');
+        PermissionSet pr = new PermissionSet(Name='FC_Grantee_Base_Permissions011',Label='FC Grantee Base Permissions011');
         insert pr;
         String permSetName = pr.Id;
         //We query on the Id because we know what the ID will be. This gets us the correct newly created permission set to work with. 
@@ -367,7 +367,7 @@ END ANONYMOUS BLOCK
 * @return Nothing
 ********************************************************************************************************/
     public  void FCAmendmentsPerms(){
-        PermissionSet pr = new PermissionSet(Name='FC_Amendments_Permissions001',Label='FC Amendments Permissions001');
+        PermissionSet pr = new PermissionSet(Name='FC_Amendments_Permissions011',Label='FC Amendments Permissions011');
         insert pr;
         String permSetName = pr.Id;
         pr = [SELECT Id, Label, Name, Description FROM PermissionSet WHERE ID = :permSetName];
@@ -457,7 +457,7 @@ END ANONYMOUS BLOCK
 * @return Nothing
 ********************************************************************************************************/   
     public  void FCBenchMarkPerms(){
-        PermissionSet pr = new PermissionSet(Name='FC_Benchmark_Base_Permissions001',Label='FC Benchmark Base Permissions001');
+        PermissionSet pr = new PermissionSet(Name='FC_Benchmark_Base_Permissions011',Label='FC Benchmark Base Permissions011');
         insert pr;
         String permSetName = pr.Id;
         pr = [SELECT Id, Label, Name, Description FROM PermissionSet WHERE ID = :permSetName];
@@ -563,7 +563,7 @@ END ANONYMOUS BLOCK
 ********************************************************************************************************/       
     public void FCGranteeReportPerms(){
         
-        PermissionSet pr = new PermissionSet(Name='FC_Grantee_Report_Base_Permissions001',Label='FC Grantee Report Base Permissions001');
+        PermissionSet pr = new PermissionSet(Name='FC_Grantee_Report_Base_Permissions011',Label='FC Grantee Report Base Permissions011');
         insert pr;
         String permSetName = pr.Id;
         pr = [SELECT Id, Label, Name, Description FROM PermissionSet WHERE ID = :permSetName];
@@ -692,7 +692,7 @@ END ANONYMOUS BLOCK
 ********************************************************************************************************/ 
     public void FCReviewerPerms(){
         
-        PermissionSet pr = new PermissionSet(Name='FC_Reviewer_Perms_Base_Permissions001',Label='FC Reviewer Perms Base Permissions001', Description='FC Reviewer Perms Base Permissions. This permission set will contain no object or field level access if you dont have the Reviewer portal installed');
+        PermissionSet pr = new PermissionSet(Name='FC_Reviewer_Perms_Base_Permissions011',Label='FC Reviewer Perms Base Permissions011', Description='FC Reviewer Perms Base Permissions. This permission set will contain no object or field level access if you dont have the Reviewer portal installed');
         insert pr;
         String permSetName = pr.Id;
         pr = [SELECT Id, Label, Name, Description FROM PermissionSet WHERE ID = :permSetName];
