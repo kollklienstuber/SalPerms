@@ -11,7 +11,7 @@ public with sharing class SalPerms {
 */
     
     /*
-Anonymous block to kick off all methods creating 5 different permission sets:
+Anonymous block to kick off all methods creating 3 different permission sets:
 
 ====================
 START ANONYMOUS BLOCK
