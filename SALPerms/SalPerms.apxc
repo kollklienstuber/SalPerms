@@ -257,7 +257,7 @@ END ANONYMOUS BLOCK
         //        fieldsAndCRUD.put('Contact.Name', new List<Boolean>{True, False});
         fieldsAndCRUD.put('Contact.Primary_Academic_Program__c', new List<Boolean>{True, False});
         fieldsAndCRUD.put('Contact.Primary_Department__c', new List<Boolean>{True, False});
-        fieldsAndCRUD.put('Contact.Student_ID__c', new List<Boolean>{True, False});
+        //fieldsAndCRUD.put('Contact.Student_ID__c', new List<Boolean>{True, False});
         fieldsAndCRUD.put('Contact.Title', new List<Boolean>{True, False});
         
         fieldsAndCRUD.put('hed__Course__c.hed__Course_ID__c', new List<Boolean>{True, False});
