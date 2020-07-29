@@ -163,7 +163,7 @@ END ANONYMOUS BLOCK
         objectsAndCRUD.put('hed__Term__c', new List<Boolean>{True, False, False, False});
         objectsAndCRUD.put('hed__Course_Offering__c', new List<Boolean>{True, False, False, False});
         objectsAndCRUD.put('hed__Facility__c', new List<Boolean>{True, False, True, False});
-        //???????Prediction Permissions?????????
+        objectsAndCRUD.put('sfal__Prediction__c', new List<Boolean>{True, False, False, False});
         objectsAndCRUD.put('hed__Program_Enrollment__c', new List<Boolean>{True, False, True, False});
         //queueTopicSetting depends on topic so we do Topic first 
         objectsAndCRUD.put('sfal__Topic__c', new List<Boolean>{True, False, True, False});
@@ -282,8 +282,21 @@ END ANONYMOUS BLOCK
         //Field Name: bad value for restricted picklist field: hed__Facility__c.Name: [Field]
         // fieldsAndCRUD.put('hed__Facility__c.Name', new List<Boolean>{True, True});
         
-        
-        //???????Prediction Permissions?????????
+        fieldsAndCRUD.put('sfal__Prediction__c.sfal__Alert__c', new List<Boolean>{True, False});
+        fieldsAndCRUD.put('sfal__Prediction__c.sfal__Appointment__c', new List<Boolean>{True, False});
+        fieldsAndCRUD.put('sfal__Prediction__c.sfal__Boolean__c', new List<Boolean>{True, False});
+        fieldsAndCRUD.put('sfal__Prediction__c.sfal__Case__c', new List<Boolean>{True, False});
+        fieldsAndCRUD.put('sfal__Prediction__c.sfal__Date__c', new List<Boolean>{True, False});
+        fieldsAndCRUD.put('sfal__Prediction__c.sfal__DateTime__c', new List<Boolean>{True, False});
+        fieldsAndCRUD.put('sfal__Prediction__c.sfal__Model__c', new List<Boolean>{True, False});
+        fieldsAndCRUD.put('sfal__Prediction__c.sfal__Number__c', new List<Boolean>{True, False});
+        fieldsAndCRUD.put('sfal__Prediction__c.sfal__RelatedRecordId_1__c', new List<Boolean>{True, False});
+        fieldsAndCRUD.put('sfal__Prediction__c.sfal__Text__c', new List<Boolean>{True, False});
+        fieldsAndCRUD.put('sfal__Prediction__c.sfal__Type__c', new List<Boolean>{True, False});
+        fieldsAndCRUD.put('sfal__Prediction__c.sfal__User__c', new List<Boolean>{True, False});
+        fieldsAndCRUD.put('sfal__Prediction__c.sfal__Version__c', new List<Boolean>{True, False});
+
+
         
         fieldsAndCRUD.put('hed__Program_Enrollment__c.hed__Graduation_Year__c', new List<Boolean>{True, False});
         fieldsAndCRUD.put('hed__Program_Enrollment__c.hed__Contact__c', new List<Boolean>{True, False});
