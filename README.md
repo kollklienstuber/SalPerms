@@ -6,7 +6,9 @@ Utilizing this automated tool does require creating the following:
 2: One Apex Test Class
 
 Once the tool is ran you will find five newly created permissions sets found under "Setup" -> "Permission Sets" The permissions set names are as follows and align to the below corresponding setup articles:
+
 1: Permission Set Name: FC Grantee Base Permissions - Corresponding Permissions
+
 2: Permission Set Name: FC Amendments Permissions - Corresponding Permissions
 3: Permission Set Name: FC Benchmark Base Permissions - Corresponding Permissions
 4: Permission Set Name: FC Grantee Report Base Permissions - Corresponding Permissions
