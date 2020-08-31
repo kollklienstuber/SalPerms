@@ -2,7 +2,9 @@ Currently foundationConnect requires a wide range of object and field level perm
 These permissions can be found on the foundationConnect documentation pages found under "Set Up Security" 
 Manually assigning these permissions takes time and can cause errors if done incorrectly. An alternative to manual creation is to preform the steps below inside the "Resolution" section of this article. 
 Utilizing this automated tool does require creating the following:
+
 1: One Apex Class
+
 2: One Apex Test Class
 
 Once the tool is ran you will find five newly created permissions sets found under "Setup" -> "Permission Sets" The permissions set names are as follows and align to the below corresponding setup articles:
