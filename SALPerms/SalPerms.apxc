@@ -31,7 +31,7 @@ END ANONYMOUS BLOCK
 
 */
     //variable to test with. This variable alters the perm set name so it's unqiue. 
-    Integer   curNumlabel = 11;
+    Integer   curNumlabel = 1;
     
     /*******************************************************************************************************
 * @description Method that is used to do the logic of assigning the correct permissions on the permission
