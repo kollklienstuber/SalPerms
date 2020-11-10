@@ -117,7 +117,7 @@ END ANONYMOUS BLOCK
 ********************************************************************************************************/
     public void SalBasePermsAdvisor(){
         //Create the permission set and insert it so we can query on it. 
-        PermissionSet pr = new PermissionSet(Name='SalAdvisorPermissionsOne', Label='Sal Advisor Permissionss');
+        PermissionSet pr = new PermissionSet(Name='SalAdvisorPermissionsOne', Label='Sal Advisor Permissions');
         insert pr;
         String permSetName = pr.Id;
         //We query on the Id because we know what the ID will be. This gets us the correct newly created permission set to work with. 
