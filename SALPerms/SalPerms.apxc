@@ -111,7 +111,7 @@ END ANONYMOUS BLOCK
 ********************************************************************************************************/
     public void SalBasePermsAdvisor(){
         //Create the permission set and insert it so we can query on it. 
-        PermissionSet pr = new PermissionSet(Name='SalAdvisorPermissions' + curNumlabel, Label='Sal Advisor Permissions' + curNumlabel);
+        PermissionSet pr = new PermissionSet(Name='SalAdvisorPermissionsOne', Label='Sal Advisor Permissionss');
         insert pr;
         String permSetName = pr.Id;
         //We query on the Id because we know what the ID will be. This gets us the correct newly created permission set to work with. 
@@ -156,6 +156,12 @@ END ANONYMOUS BLOCK
         objectsAndCRUD.put('sfal__Alert__c', new List<Boolean>{True, False, False, False});
         objectsAndCRUD.put('sfal__Appointment__c', new List<Boolean>{True, True, True, False});
         objectsAndCRUD.put('sfal__AppointmentAttendee__c', new List<Boolean>{True, True, True, False});
+        
+        objectsAndCRUD.put('sfal__AppointmentLocation__c', new List<Boolean>{True, True, True, True});
+        objectsAndCRUD.put('sfal__Availability__c', new List<Boolean>{True, True, True, True});
+        objectsAndCRUD.put('sfal__AvailabilityLocation__c', new List<Boolean>{True, True, True, True});
+        objectsAndCRUD.put('sfal__AvailabilityTopic__c', new List<Boolean>{True, True, True, True});
+        
         objectsAndCRUD.put('Case', new List<Boolean>{True, True, True, False});
         objectsAndCRUD.put('Contact', new List<Boolean>{True, False, False, False});
         objectsAndCRUD.put('hed__Course__c', new List<Boolean>{True, False, False, False});
@@ -209,6 +215,7 @@ END ANONYMOUS BLOCK
         fieldsAndCRUD.put('sfal__Alert__c.sfal__IsClosed__c ', new List<Boolean>{True, False});
         
         fieldsAndCRUD.put('sfal__Appointment__c.sfal__AdditionalConnectionInformation__c', new List<Boolean>{True, True});
+        fieldsAndCRUD.put('sfal__Appointment__c.sfal__AppointmentLocation__c', new List<Boolean>{True, True});
         // System.DmlException: Upsert failed. First exception on row 9; first error: INVALID_OR_NULL_FOR_RESTRICTED_PICKLIST, 
         //  Field Name: bad value for restricted picklist field: sfal__Appointment__c.Name: [Field]
         //  fieldsAndCRUD.put('sfal__Appointment__c.Name', new List<Boolean>{True, True});
@@ -230,6 +237,25 @@ END ANONYMOUS BLOCK
         fieldsAndCRUD.put('sfal__AppointmentAttendee__c.sfal__StatusComments__c', new List<Boolean>{True, True});
         fieldsAndCRUD.put('sfal__AppointmentAttendee__c.sfal__StatusUpdatedBy__c', new List<Boolean>{True, True});
         fieldsAndCRUD.put('sfal__AppointmentAttendee__c.sfal__StatusUpdatedDate__c', new List<Boolean>{True, True});
+        
+        
+        
+        fieldsAndCRUD.put('sfal__AppointmentLocation__c.sfal__AdditionalDetails__c', new List<Boolean>{True, True});
+        fieldsAndCRUD.put('sfal__AppointmentLocation__c.sfal__Building__c', new List<Boolean>{True, True});
+        fieldsAndCRUD.put('sfal__AppointmentLocation__c.sfal__Campus__c', new List<Boolean>{True, True});
+        fieldsAndCRUD.put('sfal__AppointmentLocation__c.sfal__MeetingLink__c', new List<Boolean>{True, True});
+        fieldsAndCRUD.put('sfal__AppointmentLocation__c.sfal__Phone__c', new List<Boolean>{True, True});
+        fieldsAndCRUD.put('sfal__AppointmentLocation__c.sfal__Room__c', new List<Boolean>{True, True});
+        fieldsAndCRUD.put('sfal__AppointmentLocation__c.sfal__SortOrder__c', new List<Boolean>{True, True});
+        fieldsAndCRUD.put('sfal__AppointmentLocation__c.sfal__Type__c', new List<Boolean>{True, True});
+        
+        
+        fieldsAndCRUD.put('sfal__Availability__c.sfal__AppointmentType__c', new List<Boolean>{True, True});
+        
+        
+        //fieldsAndCRUD.put('sfal__AvailabilityLocation__c.sfal__Type__c', new List<Boolean>{True, True});
+        // fieldsAndCRUD.put('sfal__AvailabilityTopic__c.sfal__Type__c', new List<Boolean>{True, True});
+        
         
         fieldsAndCRUD.put('Case.sfal__AdvisingPool__c', new List<Boolean>{True, True});
         //System.DmlException: Upsert failed. First exception on row 26; first error: INVALID_OR_NULL_FOR_RESTRICTED_PICKLIST,
@@ -295,8 +321,8 @@ END ANONYMOUS BLOCK
         fieldsAndCRUD.put('sfal__Prediction__c.sfal__Type__c', new List<Boolean>{True, False});
         fieldsAndCRUD.put('sfal__Prediction__c.sfal__User__c', new List<Boolean>{True, False});
         fieldsAndCRUD.put('sfal__Prediction__c.sfal__Version__c', new List<Boolean>{True, False});
-
-
+        
+        
         
         fieldsAndCRUD.put('hed__Program_Enrollment__c.hed__Graduation_Year__c', new List<Boolean>{True, False});
         fieldsAndCRUD.put('hed__Program_Enrollment__c.hed__Contact__c', new List<Boolean>{True, False});
@@ -318,6 +344,9 @@ END ANONYMOUS BLOCK
         fieldsAndCRUD.put('sfal__QueueWaitingRoomResource__c.sfal__AdvisingPool__c', new List<Boolean>{True, True});
         fieldsAndCRUD.put('sfal__QueueWaitingRoomResource__c.sfal__SortOrder__c', new List<Boolean>{True, True});
         fieldsAndCRUD.put('sfal__QueueWaitingRoomResource__c.sfal__User__c', new List<Boolean>{True, True});
+        fieldsAndCRUD.put('sfal__QueueWaitingRoomResource__c.WaitingRoom__c', new List<Boolean>{True, True});
+        
+        
         //System.DmlException: Upsert failed. First exception on row 66; first error: 
         //INVALID_OR_NULL_FOR_RESTRICTED_PICKLIST, Field Name: bad value for restricted picklist field: sfal__QueueWaitingRoomResource__c.Name: [Field]
         //fieldsAndCRUD.put('sfal__QueueWaitingRoomResource__c.Name', new List<Boolean>{True, False});
@@ -396,7 +425,7 @@ END ANONYMOUS BLOCK
 ********************************************************************************************************/
     public void SalBasePermsAdvisee(){
         //Create the permission set and insert it so we can query on it. 
-        PermissionSet pr = new PermissionSet(Name='SalAdviseePermissions' + curNumlabel, Label='Sal Advisee Permissions' + curNumlabel);
+        PermissionSet pr = new PermissionSet(Name='SalAdviseePermissionsOne', Label='Sal Advisee Permissions');
         insert pr;
         String permSetName = pr.Id;
         //We query on the Id because we know what the ID will be. This gets us the correct newly created permission set to work with. 
@@ -440,6 +469,14 @@ END ANONYMOUS BLOCK
         objectsAndCRUD.put('sfal__AdvisingPool__c', new List<Boolean>{True, False, False, False});
         objectsAndCRUD.put('sfal__Appointment__c', new List<Boolean>{True, True, True, False});
         objectsAndCRUD.put('sfal__AppointmentAttendee__c', new List<Boolean>{True, True, True, False});
+        objectsAndCRUD.put('sfal__AppointmentLocation__c', new List<Boolean>{True, False, False, False});
+        objectsAndCRUD.put('sfal__Availability__c', new List<Boolean>{True, False, False, False});
+        
+        
+        objectsAndCRUD.put('sfal__AvailabilityLocation__c', new List<Boolean>{True, False, False, False});
+        objectsAndCRUD.put('sfal__AvailabilityTopic__c', new List<Boolean>{True, False, False, False});
+        
+        
         objectsAndCRUD.put('Case', new List<Boolean>{True, False, False, False});
         objectsAndCRUD.put('Contact', new List<Boolean>{True, False, False, False});
         objectsAndCRUD.put('hed__Course__c', new List<Boolean>{True, False, False, False});
@@ -481,21 +518,15 @@ END ANONYMOUS BLOCK
         fieldsAndCRUD.put('Account.sfal__CaseTeamTemplateName__c', new List<Boolean>{True, False});
         fieldsAndCRUD.put('Account.Description', new List<Boolean>{True, False});
         fieldsAndCRUD.put('Account.Parent', new List<Boolean>{True, False});
-        //      System.DmlException: Upsert failed. First exception on row 3; first error: INVALID_OR_NULL_FOR_RESTRICTED_PICKLIST, 
-        //      Field Name: bad value for restricted picklist field: Account.RecordType: [Field] - Kolls note on this - I think its just already granted so its a doc bug/fix. 
-        //  fieldsAndCRUD.put('Account.RecordType', new List<Boolean>{True, False});
+        
         
         fieldsAndCRUD.put('sfal__AdvisingPool__c.sfal__CaseTeamName__c', new List<Boolean>{True, False});
         fieldsAndCRUD.put('sfal__AdvisingPool__c.sfal__Description__c', new List<Boolean>{True, False});
-        //System.DmlException: Upsert failed. First exception on row 7; first error: INVALID_OR_NULL_FOR_RESTRICTED_PICKLIST,
-        // Field Name: bad value for restricted picklist field: sfal__AdvisingPool__c.Name: [Field]
-        // fieldsAndCRUD.put('sfal__AdvisingPool__c.Name', new List<Boolean>{True, True});
         
         
-        fieldsAndCRUD.put('sfal__Appointment__c.sfal__AdditionalConnectionInformation__c', new List<Boolean>{True, False});
-        // System.DmlException: Upsert failed. First exception on row 9; first error: INVALID_OR_NULL_FOR_RESTRICTED_PICKLIST, 
-        //  Field Name: bad value for restricted picklist field: sfal__Appointment__c.Name: [Field]
-        //  fieldsAndCRUD.put('sfal__Appointment__c.Name', new List<Boolean>{True, True});
+        
+        fieldsAndCRUD.put('sfal__Appointment__c.sfal__AdditionalConnectionInformation__c', new List<Boolean>{True, True});
+        fieldsAndCRUD.put('sfal__Appointment__c.sfal__AppointmentLocation__c', new List<Boolean>{True, True});
         fieldsAndCRUD.put('sfal__Appointment__c.sfal__Description__c', new List<Boolean>{True, True});
         fieldsAndCRUD.put('sfal__Appointment__c.sfal__Location__c', new List<Boolean>{True, True});
         fieldsAndCRUD.put('sfal__Appointment__c.sfal__RelatedSubtopic__c', new List<Boolean>{True, True});
@@ -518,9 +549,35 @@ END ANONYMOUS BLOCK
         
         
         
+        fieldsAndCRUD.put('sfal__AppointmentLocation__c.sfal__AdditionalDetails__c', new List<Boolean>{True, False});
+        fieldsAndCRUD.put('sfal__AppointmentLocation__c.sfal__Building__c', new List<Boolean>{True, False});
+        fieldsAndCRUD.put('sfal__AppointmentLocation__c.sfal__Campus__c', new List<Boolean>{True, False});
+        fieldsAndCRUD.put('sfal__AppointmentLocation__c.sfal__MeetingLink__c', new List<Boolean>{True, False});
+        fieldsAndCRUD.put('sfal__AppointmentLocation__c.sfal__Phone__c', new List<Boolean>{True, False});
+        fieldsAndCRUD.put('sfal__AppointmentLocation__c.sfal__Room__c', new List<Boolean>{True, False});
+        fieldsAndCRUD.put('sfal__AppointmentLocation__c.sfal__SortOrder__c', new List<Boolean>{True, False});
+        fieldsAndCRUD.put('sfal__AppointmentLocation__c.sfal__Type__c', new List<Boolean>{True, False});
+        
+        fieldsAndCRUD.put('sfal__Availability__c.sfal__AppointmentType__c', new List<Boolean>{True, False});
+        
+        //	fieldsAndCRUD.put('sfal__AvailabilityLocation__c.', new List<Boolean>{True, True});
+        
+        // fieldsAndCRUD.put('sfal__AvailabilityTopic__c.sfal__Type__c', new List<Boolean>{True, True});
+        
+        
+        
+        
+        
+        fieldsAndCRUD.put('sfal__Availability__c.sfal__AppointmentType__c', new List<Boolean>{True, True});
+        
+        
+        
+        
+        
+        
         fieldsAndCRUD.put('Case.Contact', new List<Boolean>{True, False});
         
-
+        
         
         
         fieldsAndCRUD.put('Contact.hed__Chosen_Full_Name__c', new List<Boolean>{True, False});
@@ -541,7 +598,7 @@ END ANONYMOUS BLOCK
         fieldsAndCRUD.put('hed__Course_Enrollment__c.hed__Contact__c', new List<Boolean>{True, False});
         fieldsAndCRUD.put('hed__Course_Enrollment__c.hed__Course_Offering__c', new List<Boolean>{True, False});
         fieldsAndCRUD.put('hed__Course_Enrollment__c.hed__Status__c', new List<Boolean>{True, False});
-
+        
         
         
         fieldsAndCRUD.put('Event.IsAllDayEvent', new List<Boolean>{True, False});
@@ -556,7 +613,7 @@ END ANONYMOUS BLOCK
         fieldsAndCRUD.put('hed__Term__c.hed__Start_Date__c', new List<Boolean>{True, False});
         fieldsAndCRUD.put('hed__Term__c.hed__End_Date__c', new List<Boolean>{True, False});
         
-       
+        
         fieldsAndCRUD.put('hed__Course_Offering_Schedule__c.hed__Course_Offering__c', new List<Boolean>{True, False});
         fieldsAndCRUD.put('hed__Course_Offering_Schedule__c.hed__End_Time__c', new List<Boolean>{True, False});
         fieldsAndCRUD.put('hed__Course_Offering_Schedule__c.hed__Facility__c', new List<Boolean>{True, False});
@@ -568,7 +625,7 @@ END ANONYMOUS BLOCK
         fieldsAndCRUD.put('hed__Course_Offering_Schedule__c.hed__Thursday__c', new List<Boolean>{True, False});
         fieldsAndCRUD.put('hed__Course_Offering_Schedule__c.hed__Tuesday__c', new List<Boolean>{True, False});
         fieldsAndCRUD.put('hed__Course_Offering_Schedule__c.hed__Wednesday__c', new List<Boolean>{True, False});
-
+        
         
         //System.DmlException: Upsert failed. First exception on row 42; first error: INVALID_OR_NULL_FOR_RESTRICTED_PICKLIST, 
         //Field Name: bad value for restricted picklist field: hed__Course_Offering__c.hed__Course__c: [Field]
@@ -578,7 +635,7 @@ END ANONYMOUS BLOCK
         fieldsAndCRUD.put('hed__Course_Offering__c.hed__Start_Date__c', new List<Boolean>{True, False});
         //System.DmlException: Upsert failed. First exception on row 45; first error: INVALID_OR_NULL_FOR_RESTRICTED_PICKLIST,
         // Field Name: bad value for restricted picklist field: hed__Course_Offering__c.hed__Term__c: [Field]
-
+        
         
         
         //System.DmlException: Upsert failed. First exception on row 55; first error: INVALID_OR_NULL_FOR_RESTRICTED_PICKLIST, 
@@ -631,7 +688,7 @@ END ANONYMOUS BLOCK
         fieldsAndCRUD.put('sfal__SuccessPlan__c.sfal__Comments__c', new List<Boolean>{True, False});
         //System.DmlException: Upsert failed. First exception on row 69; 
         //first error: INVALID_OR_NULL_FOR_RESTRICTED_PICKLIST, Field Name: bad value for restricted picklist field: sfal__SuccessPlan__c.CreatedBy: [Field]
-       // fieldsAndCRUD.put('sfal__SuccessPlan__c.CreatedBy', new List<Boolean>{True, False});
+        // fieldsAndCRUD.put('sfal__SuccessPlan__c.CreatedBy', new List<Boolean>{True, False});
         fieldsAndCRUD.put('sfal__SuccessPlan__c.sfal__IsCaseAdviseeRecord__c', new List<Boolean>{True, False});
         fieldsAndCRUD.put('sfal__SuccessPlan__c.sfal__NumberOfOpenTasks__c', new List<Boolean>{True, False});
         fieldsAndCRUD.put('sfal__SuccessPlan__c.sfal__NumberOfOverdueTasks__c', new List<Boolean>{True, False});
@@ -658,15 +715,15 @@ END ANONYMOUS BLOCK
         fieldsAndCRUD.put('sfal__SuccessPlanTemplateTask__c.sfal__RelativeDueDate__c', new List<Boolean>{True, True});
         fieldsAndCRUD.put('sfal__SuccessPlanTemplateTask__c.sfal__Type__c', new List<Boolean>{True, True});
         
-
+        
         fieldsAndCRUD.put('Task.Description', new List<Boolean>{True, True});
         fieldsAndCRUD.put('Task.ActivityDate', new List<Boolean>{True, False});
         fieldsAndCRUD.put('Task.Who', new List<Boolean>{True, False});
         fieldsAndCRUD.put('Task.IsVisibleInSelfService', new List<Boolean>{True, True});
         fieldsAndCRUD.put('Task.What', new List<Boolean>{True, True});
         fieldsAndCRUD.put('Task.Type', new List<Boolean>{True, True});
-
-
+        
+        
         
         fieldsAndCRUD.put('sfal__UserTopicSetting__c.sfal__DefaultAppointmentDuration__c', new List<Boolean>{True, False});
         //System.DmlException: Upsert failed. First exception on row 89; first error: INVALID_OR_NULL_FOR_RESTRICTED_PICKLIST, 
@@ -702,7 +759,7 @@ END ANONYMOUS BLOCK
 ********************************************************************************************************/
     public void SalAdvisorOrAdviseePathwayPerms(){
         //Create the permission set and insert it so we can query on it. 
-        PermissionSet pr = new PermissionSet(Name='SalPathWayPerms' + curNumlabel, Label='Sal PathWay Permissions' + curNumlabel);
+        PermissionSet pr = new PermissionSet(Name='SalPathWayPermsOne', Label='Sal PathWay Permissions');
         insert pr;
         String permSetName = pr.Id;
         //We query on the Id because we know what the ID will be. This gets us the correct newly created permission set to work with. 
