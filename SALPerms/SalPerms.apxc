@@ -17,12 +17,18 @@ Anonymous block to kick off all methods creating 3 different permission sets:
 START ANONYMOUS BLOCK
 ====================
 
+SalPerms newPerms = new SalPerms(); 
+try
+{ 
+    newPerms.SalAdvisorOrAdviseePathwayPerms(); 
+} 
+catch (Exception e){ system.debug(e); }
 
-SalPerms cp = new SalPerms();
-cp.SalBasePermsAdvisor();
-cp.SalAdvisorOrAdviseePathwayPerms();
-cp.SalBasePermsAdvisee();
-
+finally
+{ 
+    newPerms.SalBasePermsAdvisor();
+    newPerms.SalBasePermsAdvisee(); 
+}
 
 ====================
 END ANONYMOUS BLOCK
