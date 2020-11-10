@@ -24,16 +24,17 @@ To run the tool which will create three SAL permission sets perform the below.
 5: Delete all code currently in this class and paste in the code you copied from step 2 and save the file ("file" -> "save" )
 6: Select "debug" -> "Open Execute Anonymous window" and paste the below code,
  
-FCPermsNoUI newPerms = new FCPermsNoUI();
-try {
-newPerms.FCReviewerPerms();
-}
-catch (Exception e){
-system.debug(e);
-}
-finally{
-newPerms.FCGranteeReportPerms();     
-newPerms.FCBenchMarkPerms();
+SalPerms newPerms = new SalPerms(); 
+try
+{ 
+    newPerms.SalAdvisorOrAdviseePathwayPerms(); 
+} 
+catch (Exception e){ system.debug(e); }
+
+finally
+{ 
+    newPerms.SalBasePermsAdvisor();
+    newPerms.SalBasePermsAdvisee(); 
 }
 
 
