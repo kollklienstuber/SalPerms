@@ -1,14 +1,6 @@
 public with sharing class SalPerms {
     
-    /**
-* @author Salesforce.org
-* @date 2020
-*
-* @group ???
-*
-* @description Creates permissions automatically for SAL users
-* 
-*/
+
     
     /*
 Anonymous block to kick off all methods creating 3 different permission sets:
