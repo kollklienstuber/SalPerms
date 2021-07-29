@@ -220,6 +220,10 @@ END ANONYMOUS BLOCK
         fieldsAndCRUD.put('sfal__Appointment__c.sfal__Description__c', new List<Boolean>{True, True});
         fieldsAndCRUD.put('sfal__Appointment__c.sfal__Location__c', new List<Boolean>{True, True});
         fieldsAndCRUD.put('sfal__Appointment__c.sfal__RelatedCase__c', new List<Boolean>{True, True});
+        fieldsAndCRUD.put('sfal__Appointment__c.sfal__AttendeeLimit__c', new List<Boolean>{True, True});
+        fieldsAndCRUD.put('sfal__Appointment__c.sfal__IsDiscoverable__c', new List<Boolean>{True, True});
+
+  
         fieldsAndCRUD.put('sfal__Appointment__c.sfal__RelatedSubtopic__c', new List<Boolean>{True, True});
         fieldsAndCRUD.put('sfal__Appointment__c.sfal__RelatedTopic__c', new List<Boolean>{True, True});
         fieldsAndCRUD.put('sfal__Appointment__c.sfal__Subtopic__c', new List<Boolean>{True, True});
@@ -249,7 +253,8 @@ END ANONYMOUS BLOCK
         
         
         fieldsAndCRUD.put('sfal__Availability__c.sfal__AppointmentType__c', new List<Boolean>{True, True});
-        
+        fieldsAndCRUD.put('sfal__Availability__c.sfal__AttendeeLimit__c', new List<Boolean>{True, True});
+
         
         //fieldsAndCRUD.put('sfal__AvailabilityLocation__c.sfal__Type__c', new List<Boolean>{True, True});
         // fieldsAndCRUD.put('sfal__AvailabilityTopic__c.sfal__Type__c', new List<Boolean>{True, True});
@@ -534,7 +539,9 @@ END ANONYMOUS BLOCK
         fieldsAndCRUD.put('sfal__Appointment__c.sfal__Type__c', new List<Boolean>{True, True});
         fieldsAndCRUD.put('sfal__Appointment__c.sfal__IsWebMeeting__c', new List<Boolean>{True, False});
         fieldsAndCRUD.put('sfal__Appointment__c.sfal__WebMeetingLink__c', new List<Boolean>{True, False});
-        
+        fieldsAndCRUD.put('sfal__Appointment__c.sfal__AttendeeLimit__c', new List<Boolean>{True, True});
+        fieldsAndCRUD.put('sfal__Appointment__c.sfal__IsDiscoverable__c', new List<Boolean>{True, True});
+
         
         
         fieldsAndCRUD.put('sfal__AppointmentAttendee__c.sfal__AdviseeRecord__c', new List<Boolean>{True, True});
@@ -557,7 +564,8 @@ END ANONYMOUS BLOCK
         fieldsAndCRUD.put('sfal__AppointmentLocation__c.sfal__Type__c', new List<Boolean>{True, False});
         
         fieldsAndCRUD.put('sfal__Availability__c.sfal__AppointmentType__c', new List<Boolean>{True, False});
-        
+        fieldsAndCRUD.put('sfal__Availability__c.sfal__AttendeeLimit__c', new List<Boolean>{True, False});
+
         //	fieldsAndCRUD.put('sfal__AvailabilityLocation__c.', new List<Boolean>{True, True});
         
         // fieldsAndCRUD.put('sfal__AvailabilityTopic__c.sfal__Type__c', new List<Boolean>{True, True});
